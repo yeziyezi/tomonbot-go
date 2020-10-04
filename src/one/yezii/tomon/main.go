@@ -90,14 +90,18 @@ func startListeningMessage() {
 }
 func startSendHeartbeat() {
 	for {
-		//如果发送心跳失败可能是连接断开，尝试重新连接
-		if ctx.SendHeartbeat() != nil {
-			logger.Warn("try reconnect to server")
-			if ctx.DoAuth() != nil {
-				_ = resolveHeartbeatInterval()
-			}
-		}
+		//以指定心跳间隔的一半时长作为发送心跳的间隔
 		time.Sleep(time.Duration(ctx.HeartbeatInterval/2) * time.Millisecond)
+		//如果发送心跳失败可能是连接断开，尝试重新连接
+		err := ctx.SendHeartbeat()
+		if err == nil {
+			continue
+		}
+		logger.Warn("try reconnect to server")
+		err = ctx.DoAuth()
+		if err == nil {
+			_ = resolveHeartbeatInterval()
+		}
 	}
 }
 func startDealingMessage() {
