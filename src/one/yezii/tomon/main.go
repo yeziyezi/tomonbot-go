@@ -31,9 +31,9 @@ func initConn() error {
 	return logger.ErrOrNil(err)
 }
 
-//解析心跳间隔和session id
+//等待认证后返回解析心跳间隔和session id
 //todo 如果超过一定时间没有接收到或接收到的数据无法正确解析则可能是认证失败，加log
-func resolveHeartbeatInterval() error {
+func waitAuthResponse() error {
 	var hm *heartbeatMessageFromServer
 	err := ctx.Receive(&hm)
 	if err != nil {
@@ -41,6 +41,23 @@ func resolveHeartbeatInterval() error {
 	}
 	ctx.SessionId = hm.D.SessionId
 	ctx.HeartbeatInterval = hm.D.HeartbeatInterval
+
+	//等待30s，如果没有得到IDENTITY消息则认为是token错误认证失败
+	identifyChan := make(chan messageFromServer)
+	go func() {
+		var msg messageFromServer
+		_ = ctx.Receive(&msg)
+		if msg.Op == 2 {
+			identifyChan <- msg
+		}
+	}()
+	select {
+	case <-identifyChan:
+		logger.Info("Authentication success")
+		break
+	case <-time.After(30 * time.Second):
+		panic("Authentication failed,server no response for 30 seconds,please check token")
+	}
 	return nil
 }
 func main() {
@@ -61,7 +78,7 @@ func main() {
 		return
 	}
 	//解析出心跳间隔时长
-	err = resolveHeartbeatInterval()
+	err = waitAuthResponse()
 	if err != nil {
 		return
 	}
@@ -98,7 +115,7 @@ func startSendHeartbeat() {
 		logger.Warn("try reconnect to server")
 		err = ctx.DoAuth()
 		if err == nil {
-			_ = resolveHeartbeatInterval()
+			_ = waitAuthResponse()
 		}
 	}
 }
