@@ -2,6 +2,7 @@ package main
 
 import (
 	"golang.org/x/net/websocket"
+	"sync"
 	"time"
 	"tomonbot-go/src/one/yezii/tomon/util"
 )
@@ -64,20 +65,17 @@ func main() {
 	if err != nil {
 		return
 	}
+	wg := sync.WaitGroup{}
+	wg.Add(3)
 	//接收消息推送到chan中
 	go startListeningMessage()
 	//发送心跳
 	go startSendHeartbeat()
 	//处理接收到的消息
 	go startDealingMessage()
-	blockingWaiting()
+	wg.Wait()
 }
 
-func blockingWaiting() {
-	for {
-		time.Sleep(1 * time.Hour)
-	}
-}
 func startListeningMessage() {
 	for {
 		var msg *messageFromServer
