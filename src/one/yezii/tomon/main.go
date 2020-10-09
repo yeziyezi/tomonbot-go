@@ -32,7 +32,6 @@ func initConn() error {
 }
 
 //等待认证后返回解析心跳间隔和session id
-//todo 如果超过一定时间没有接收到或接收到的数据无法正确解析则可能是认证失败，加log
 func waitAuthResponse() error {
 	var hm *heartbeatMessageFromServer
 	err := ctx.Receive(&hm)
