@@ -1,4 +1,6 @@
 .idea/
 build/tomon-go-linux
 build/tomon-go-win.exe
+build/config.json
+config.json
 *.iml

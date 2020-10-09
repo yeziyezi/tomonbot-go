@@ -18,7 +18,7 @@ func NewYLogger(name string) *YLogger {
 	yLogger.name = name
 	yLogger.infoLogger = initInnerLogger("INFO")
 	yLogger.warnLogger = initInnerLogger("WARN")
-	yLogger.errorLogger = initInnerLogger("ERR")
+	yLogger.errorLogger = initInnerLogger("ERR ")
 	return yLogger
 }
 func (it *YLogger) Info(v interface{}) {
